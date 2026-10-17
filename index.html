@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#fafafa">
+<title>Bienvenue chez OLA | Embarquement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Embarquement OLA : accueil, vidéo, une question par écran, récapitulatif, confirmation. Branding ola-ai.ca. */
+:root{
+  --bg:#fafafa; --card:#f5f5f5; --white:#ffffff; --fg:#0a0a0a; --fg-2:#555555;
+  --fg-60:rgba(10,10,10,.6); --fg-40:rgba(10,10,10,.4); --fg-12:rgba(10,10,10,.12); --fg-05:rgba(10,10,10,.05);
+  --border:rgba(215,215,215,.6); --border-solid:#d7d7d7; --err:#b42318;
+  --sans:"Geist","Geist Fallback",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono","Geist Mono Fallback",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior:none}
+
+/* Haut de page */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:20;background:var(--bg);padding:max(12px,env(safe-area-inset-top)) 20px 0}
+.topbar-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px;height:48px}
+.topbar img{height:38px;width:auto;display:block}
+.stage{font-family:var(--mono);font-size:11px;color:var(--fg-40);letter-spacing:.04em}
+.back{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;color:var(--fg-60);background:none;border:0;cursor:pointer;padding:10px 4px;min-height:44px}
+.back svg{width:14px;height:14px}
+.progress{max-width:640px;margin:0 auto;height:3px;border-radius:999px;background:var(--fg-12);overflow:hidden}
+.progress div{height:100%;width:0;background:var(--fg);border-radius:999px;transition:width .45s var(--ease)}
+
+/* Écrans */
+.deck{position:fixed;inset:0;overflow:hidden}
+.screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  visibility:hidden;opacity:0;transform:translate3d(0,24px,0);pointer-events:none;
+  transition:opacity .3s ease,transform .35s var(--ease),visibility 0s linear .35s}
+.screen.back-dir{transform:translate3d(0,-24px,0)}
+.screen.active{visibility:visible;opacity:1;transform:none;pointer-events:auto;transition:opacity .3s ease,transform .35s var(--ease),visibility 0s}
+.inner{min-height:100%;max-width:640px;margin:0 auto;padding:max(104px,13vh) 18px 44px;display:flex;flex-direction:column;gap:22px}
+
+.count{font-family:var(--mono);font-size:12px;color:var(--fg-40)}
+.count b{font-weight:500;color:var(--fg)}
+h1,h2{font-weight:600;letter-spacing:-.03em;line-height:1.08;text-wrap:balance}
+h1{font-size:clamp(36px,9.5vw,54px)}
+h2{font-size:clamp(26px,7vw,34px)}
+h1 span,h2 span{display:block;color:var(--fg-2)}
+.sub{font-size:17px;color:var(--fg-2);line-height:1.55}
+.hint{font-size:15px;color:var(--fg-60);margin-top:-10px;line-height:1.5}
+.pill-tag{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--white);border-radius:999px;padding:6px 14px;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.pill-tag i{width:6px;height:6px;border-radius:50%;background:var(--fg)}
+
+/* Accueil */
+.roadmap{list-style:none;background:var(--white);border:1px solid var(--border);border-radius:18px;padding:6px 18px}
+.roadmap li{display:flex;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--border)}
+.roadmap li:first-child{border-top:0}
+.roadmap .n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--fg);color:var(--bg);font-family:var(--mono);font-size:13px;display:flex;align-items:center;justify-content:center}
+.roadmap li + li .n{background:var(--card);color:var(--fg);border:1px solid var(--border-solid)}
+.roadmap strong{display:block;font-size:16px;font-weight:600}
+.roadmap span{display:block;font-size:14px;color:var(--fg-60)}
+
+/* Vidéo */
+.video{border-radius:18px;overflow:hidden;background:var(--fg);border:1px solid var(--border);position:relative;aspect-ratio:16/9;max-width:100%}
+.video video{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;background:var(--fg)}
+
+/* Choix */
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice{display:flex;align-items:center;gap:14px;width:100%;min-height:58px;padding:14px 16px;border-radius:14px;border:1px solid var(--border-solid);background:var(--white);
+  font:inherit;font-size:16px;color:var(--fg);text-align:left;cursor:pointer;transition:border-color .15s,background .15s,transform .12s;-webkit-tap-highlight-color:transparent}
+.choice:active{transform:scale(.985)}
+.choice:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.choice .lbl{flex:1;min-width:0;line-height:1.35}
+.choice .tick{flex:none;width:18px;height:18px;opacity:0;transition:opacity .15s}
+.choice[aria-checked="true"]{border-color:var(--fg);background:var(--fg);color:var(--bg)}
+.choice[aria-checked="true"] .tick{opacity:1}
+
+/* Champs */
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0;grid-column:1/-1}
+.field.half{grid-column:auto}
+.field label{font-size:13px;font-weight:500;color:var(--fg-60)}
+.field input,.field textarea{font:inherit;font-size:17px;color:var(--fg);background:var(--white);border:1px solid var(--border-solid);border-radius:12px;padding:14px 16px;width:100%;min-height:54px;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none}
+.field textarea{min-height:128px;resize:vertical;line-height:1.5}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--fg);box-shadow:0 0 0 1px var(--fg)}
+.field input[aria-invalid="true"]{border-color:var(--err);box-shadow:0 0 0 1px var(--err)}
+.err{font-size:13px;color:var(--err)}
+.err:empty{display:none}
+.reveal-field{animation:in .3s var(--ease)}
+@keyframes in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+/* Équipe */
+.members{display:flex;flex-direction:column;gap:12px}
+.member{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;animation:in .3s var(--ease)}
+.member-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.member-head strong{font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px}
+.member-head .n{width:24px;height:24px;border-radius:50%;background:var(--card);border:1px solid var(--border-solid);font-family:var(--mono);font-size:11px;display:flex;align-items:center;justify-content:center}
+.remove{font:inherit;font-size:13px;color:var(--fg-60);background:none;border:0;cursor:pointer;padding:8px 4px;min-height:40px}
+.member .field input{min-height:50px;font-size:16px}
+.add{font:inherit;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;border-radius:14px;border:1.5px dashed var(--border-solid);background:transparent;color:var(--fg);cursor:pointer}
+.add svg{width:16px;height:16px}
+.note-small{font-size:13px;color:var(--fg-60);text-align:center}
+
+/* Boutons */
+.actions{display:flex;flex-direction:column;align-items:stretch;gap:10px}
+.btn{font:inherit;border:0;cursor:pointer;background:var(--fg);color:var(--bg);border-radius:999px;padding:16px 26px;font-size:16px;font-weight:500;min-height:56px;display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:opacity .15s,transform .12s;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(.985)}
+.btn:disabled{opacity:.3}
+.btn svg{width:16px;height:16px}
+.skip{font:inherit;font-size:14px;color:var(--fg-60);background:none;border:0;cursor:pointer;padding:10px;min-height:44px}
+
+/* Récapitulatif */
+.recap{background:var(--white);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+.recap-row{display:flex;justify-content:space-between;gap:16px;padding:14px 18px;border-top:1px solid var(--border)}
+.recap-row:first-child{border-top:0}
+.recap-row span{font-size:14px;color:var(--fg-60);flex:none}
+.recap-row strong{font-size:15px;font-weight:500;text-align:right;min-width:0;overflow-wrap:anywhere}
+.edit{font:inherit;font-size:14px;color:var(--fg);text-decoration:underline;text-underline-offset:3px;background:none;border:0;cursor:pointer;align-self:center;padding:8px;min-height:44px}
+.spin{width:20px;height:20px;border-radius:50%;border:2px solid rgba(250,250,250,.35);border-top-color:var(--bg);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Confirmation */
+.okmark{width:64px;height:64px;border-radius:50%;background:var(--fg);color:var(--bg);display:flex;align-items:center;justify-content:center}
+.okmark svg{width:28px;height:28px}
+.screen.active .okmark{animation:popin .5s var(--ease)}
+.screen.active .okmark path{stroke-dasharray:30;stroke-dashoffset:30;animation:draw .5s .3s var(--ease) forwards}
+@keyframes popin{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.timeline{list-style:none;background:var(--white);border:1px solid var(--border);border-radius:18px;padding:8px 18px}
+.timeline li{position:relative;display:flex;gap:14px;padding:14px 0}
+.timeline li + li{border-top:1px solid var(--border)}
+.timeline .dot{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.timeline .dot svg{width:13px;height:13px}
+.timeline .done .dot{background:var(--fg);color:var(--bg)}
+.timeline .now .dot{border:1.5px solid var(--fg)}
+.timeline .now .dot i{width:9px;height:9px;border-radius:50%;background:var(--fg);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(.7);opacity:.35}50%{transform:scale(1);opacity:1}}
+.timeline .later .dot{border:1.5px dashed var(--border-solid)}
+.timeline strong{display:block;font-size:16px;font-weight:600}
+.timeline span{display:block;font-size:14px;color:var(--fg-60);line-height:1.5;margin-top:2px}
+.tag{display:inline-block;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:2px;background:var(--card);border:1px solid var(--border);color:var(--fg)}
+.sign{display:flex;flex-direction:column;gap:2px;padding-top:4px}
+.sign span{font-size:14px;color:var(--fg-60)}
+.sign strong{font-size:18px;font-weight:600}
+.foot{font-size:12px;color:var(--fg-40);line-height:1.8}
+
+@media (min-width:600px){.actions{flex-direction:row;align-items:center}}
+@media (max-width:420px){.fields{grid-template-columns:minmax(0,1fr)}.field.half{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){.screen,.screen.back-dir{transform:none;transition-duration:.01ms}.spin,.timeline .now .dot i{animation:none}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <img src="data:image/webp;base64,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" alt="OLA">
+    <span class="stage" id="stage"></span>
+    <button type="button" class="back" id="back" hidden>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>Retour
+    </button>
+  </div>
+  <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+</header>
+
+<main class="deck" id="deck"></main>
+
+<script>
+/* ===================== RÉGLAGES ===================== */
+const CONFIG = {
+  // URL du webhook entrant GHL (déclencheur « Inbound Webhook ») pour l'embarquement
+  webhookUrl: "",
+  videoUrl: "https://assets.cdn.filesafe.space/DL5vmvAkiRP13UUTG58Q/media/6a3441a3671890ccaacc02a9.mp4",
+  maxMembers: 10
+};
+
+/* Questions. type : fields | single | members | text */
+const QUESTIONS = [
+  { id:"coordonnees", type:"fields", title:"Vos coordonnées", sub:"Le compte principal OLA sera à votre nom.",
+    fields:[
+      { id:"prenom", label:"Prénom", auto:"given-name", half:true, required:true },
+      { id:"nom", label:"Nom", auto:"family-name", half:true, required:true },
+      { id:"telephone", label:"Téléphone", type:"tel", auto:"tel", required:true, rule:"tel" },
+      { id:"courriel", label:"Courriel", type:"email", auto:"email", required:true, rule:"email", placeholder:"L'adresse que vous utilisez le plus" }
+    ] },
+  { id:"equipe", type:"single", title:"{prenom}, êtes-vous en équipe?", sub:"Si oui, on crée un accès pour chaque courtier.",
+    options:["Oui, en équipe","Non, je travaille seul(e)"] },
+  { id:"membres", type:"members", showIf: A => A.equipe === "Oui, en équipe",
+    title:"Qui fait partie de votre équipe?", sub:"Ajoutez chaque courtier qui aura accès à OLA. Pas besoin de vous ajouter." },
+  { id:"agence", type:"fields", title:"Quelle est l'adresse de votre agence?",
+    fields:[
+      { id:"adresse", label:"Adresse", auto:"street-address", required:true, placeholder:"123, rue Principale, bureau 200" },
+      { id:"ville", label:"Ville", auto:"address-level2", half:true, required:true },
+      { id:"code_postal", label:"Code postal", auto:"postal-code", half:true, required:true, rule:"postal", placeholder:"G1A 1A1" }
+    ] },
+  { id:"facturation", type:"fields", title:"Pour votre facture", sub:"À quel nom et à quel courriel voulez-vous la recevoir?",
+    fields:[
+      { id:"facture_nom", label:"Nom sur la facture", required:true, placeholder:"Ex. : Jean Tremblay Inc." },
+      { id:"facture_courriel", label:"Courriel pour la facture", type:"email", auto:"email", required:true, rule:"email", placeholder:"exemple@exemple.com", from:"courriel" }
+    ] },
+  { id:"objectif", type:"single", title:"Quel est votre objectif principal en ce moment?", sub:"Choisissez le plus important.",
+    options:["Trouver plus de clients","Mieux gérer ceux que j'ai","Libérer du temps"] },
+  { id:"cause", type:"text", title:"Selon vous, qu'est-ce qui vous empêche d'y arriver en ce moment?", placeholder:"Ex. : Je n'ai pas de système de suivi, je fais tout à la main…" },
+  { id:"probleme", type:"text", title:"{prenom}, si on pouvait régler UN seul problème dans votre business, lequel serait-ce?", placeholder:"Soyez précis, c'est par là qu'on commence." },
+  { id:"solutions", type:"single", title:"Avez-vous déjà essayé d'autres solutions?",
+    options:["Oui","Non"], followUp:{ when:["Oui"], id:"solutions_pourquoi", label:"Pourquoi ça n'a pas fonctionné?", textarea:true } },
+  { id:"base", type:"text", short:true, title:"Où se trouve votre base de données en ce moment?", sub:"Vos contacts et clients actuels. On s'occupe de les importer.", placeholder:"Ex. : Excel, Prospect, mon téléphone, Gmail…" },
+  { id:"systeme_suivi", type:"single", title:"Avez-vous un système pour savoir où chaque client en est dans le processus?",
+    options:["Oui","Non","Plus ou moins"] }
+];
+/* ==================================================== */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const tick = '<svg class="tick" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+const arrow = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M8.5 3.5L13 8l-4.5 4.5"/></svg>';
+
+// Réponses (brouillon gardé sur l'appareil si la personne revient plus tard)
+const DRAFT = "ola-embarquement";
+let A = {};
+try { A = JSON.parse(localStorage.getItem(DRAFT) || "{}"); } catch(e) {}
+const save = () => { try { localStorage.setItem(DRAFT, JSON.stringify(A)); } catch(e) {} };
+if (!Array.isArray(A.membres) || !A.membres.length) A.membres = [{ nom:"", telephone:"", courriel:"" }];
+
+// Préremplissage depuis le lien GHL : ?firstName=&lastName=&email=&phone=
+(() => {
+  const p = new URLSearchParams(location.search);
+  const take = (k, ...names) => { for (const n of names) { const v = (p.get(n) || "").trim(); if (v && !v.includes("{{")) { if (!A[k]) A[k] = v; return; } } };
+  take("prenom","firstName","first_name"); take("nom","lastName","last_name");
+  take("courriel","email"); take("telephone","phone");
+})();
+
+const firstName = () => (A.prenom || "").trim();
+const fill = t => {
+  if (t.startsWith("{prenom}, ")) { const r = t.slice(10); return firstName() ? `${firstName()}, ${r}` : r.charAt(0).toUpperCase() + r.slice(1); }
+  return t.replace(/,?\s?\{prenom\}/g, firstName() ? `, ${firstName()}` : "");
+};
+const visibleQs = () => QUESTIONS.filter(q => !q.showIf || q.showIf(A));
+
+/* --------- Écrans --------- */
+function screenIntro(){
+  return `<section class="screen" data-step="intro"><div class="inner">
+    <span class="pill-tag"><i></i>Processus d'embarquement</span>
+    <h1 data-title="Bienvenue chez OLA{prenom}.">${esc(fill("Bienvenue chez OLA{prenom}."))}</h1>
+    <p class="sub">Vous avez fait le bon choix. Voici les deux étapes pour qu'on configure votre compte exactement selon votre réalité.</p>
+    <ol class="roadmap">
+      <li><span class="n">1</span><div><strong>Votre vidéo de bienvenue</strong><span>Votre parcours d'embarquement, expliqué</span></div></li>
+      <li><span class="n">2</span><div><strong>Votre profil OLA</strong><span>Environ 3 minutes de questions</span></div></li>
+    </ol>
+    <div class="actions"><button type="button" class="btn" data-go="next">Commencer ${arrow}</button></div>
+  </div></section>`;
+}
+function screenVideo(){
+  return `<section class="screen" data-step="video"><div class="inner">
+    <span class="pill-tag"><i></i>Étape 1 sur 2</span>
+    <h2>Regardez votre vidéo de bienvenue<span>avant de remplir votre profil.</span></h2>
+    <div class="video"><video controls playsinline preload="metadata" id="vid"><source src="${esc(CONFIG.videoUrl)}" type="video/mp4">Votre navigateur ne lit pas cette vidéo.</video></div>
+    <div class="actions"><button type="button" class="btn" data-go="next">C'est fait, je remplis mon profil ${arrow}</button></div>
+  </div></section>`;
+}
+function fieldHtml(f){
+  const val = A[f.id] ?? (f.from ? A[f.from] : "") ?? "";
+  return `<div class="field${f.half ? " half" : ""}"><label for="f-${f.id}">${esc(f.label)}</label>
+    <input id="f-${f.id}" type="${f.type || "text"}" autocomplete="${f.auto || "off"}" ${f.placeholder ? `placeholder="${esc(f.placeholder)}"` : ""} value="${esc(val)}" ${f.type === "tel" ? 'inputmode="tel"' : ""}>
+    <span class="err" id="e-${f.id}"></span></div>`;
+}
+function head(q){ return `<div class="count" data-count="${q.id}"></div><h2 data-title="${esc(q.title)}">${esc(fill(q.title))}</h2>${q.sub ? `<p class="hint">${esc(q.sub)}</p>` : ""}`; }
+const nextBtn = (label, extra = "") => `<div class="actions" ${extra}><button type="button" class="btn" data-go="next">${label || "Continuer"} ${arrow}</button></div>`;
+
+function memberCard(m, i){
+  return `<div class="member" data-i="${i}">
+    <div class="member-head"><strong><span class="n">${i + 2}</span>Courtier #${i + 2}</strong>${i > 0 ? `<button type="button" class="remove" data-remove="${i}">Retirer</button>` : ""}</div>
+    <div class="field"><label for="m-nom-${i}">Nom complet</label><input id="m-nom-${i}" data-m="nom" value="${esc(m.nom)}" autocomplete="off"><span class="err" id="me-${i}"></span></div>
+    <div class="fields">
+      <div class="field half"><label for="m-tel-${i}">Téléphone</label><input id="m-tel-${i}" data-m="telephone" type="tel" inputmode="tel" value="${esc(m.telephone)}" autocomplete="off"></div>
+      <div class="field half"><label for="m-mail-${i}">Courriel</label><input id="m-mail-${i}" data-m="courriel" type="email" value="${esc(m.courriel)}" autocomplete="off"></div>
+    </div></div>`;
+}
+function renderMembers(){
+  $("members").innerHTML = A.membres.map(memberCard).join("");
+  $("add-member").hidden = A.membres.length >= CONFIG.maxMembers - 1;
+}
+
+function screenFor(q){
+  let body = "";
+  if (q.type === "fields") body = `<div class="fields">${q.fields.map(fieldHtml).join("")}</div>${nextBtn()}`;
+  if (q.type === "single") {
+    body = `<div class="choices" role="radiogroup">${q.options.map(o =>
+      `<button type="button" class="choice" role="radio" aria-checked="${A[q.id] === o}" data-q="${q.id}" data-v="${esc(o)}"><span class="lbl">${esc(o)}</span>${tick}</button>`).join("")}</div>`;
+    if (q.followUp) {
+      const f = q.followUp, show = f.when.includes(A[q.id]);
+      body += `<div class="field reveal-field" id="fu-${q.id}" ${show ? "" : "hidden"}><label for="f-${f.id}">${esc(f.label)}</label>
+        ${f.textarea ? `<textarea id="f-${f.id}">${esc(A[f.id] || "")}</textarea>` : `<input id="f-${f.id}" value="${esc(A[f.id] || "")}">`}</div>`;
+      body += nextBtn("Continuer", `data-manual="${q.id}" ${show ? "" : "hidden"}`);
+    }
+  }
+  if (q.type === "members") {
+    body = `<div class="members" id="members"></div>
+      <button type="button" class="add" id="add-member"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>Ajouter un courtier</button>
+      ${nextBtn()}`;
+  }
+  if (q.type === "text") {
+    body = `<div class="field">${q.short ? `<input id="f-${q.id}" value="${esc(A[q.id] || "")}" placeholder="${esc(q.placeholder || "")}">` : `<textarea id="f-${q.id}" placeholder="${esc(q.placeholder || "")}">${esc(A[q.id] || "")}</textarea>`}</div>${nextBtn()}`;
+  }
+  return `<section class="screen" data-step="q" data-q="${q.id}"><div class="inner">${head(q)}${body}</div></section>`;
+}
+function screenRecap(){
+  return `<section class="screen" data-step="recap"><div class="inner">
+    <span class="pill-tag"><i></i>Dernière étape</span>
+    <h2 data-title="Tout est prêt{prenom}.">${esc(fill("Tout est prêt{prenom}."))}<span>Vérifiez, puis envoyez.</span></h2>
+    <div class="recap" id="recap"></div>
+    <div class="actions"><button type="button" class="btn" id="submit">Envoyer mon profil ${arrow}</button></div>
+    <span class="err" id="e-submit" style="text-align:center"></span>
+  </div></section>`;
+}
+function screenDone(){
+  const chk = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+  return `<section class="screen" data-step="done"><div class="inner">
+    <div class="okmark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <span class="pill-tag"><i></i>Confirmation</span>
+    <h1 id="done-title">C'est reçu.<span>On prend le relais.</span></h1>
+    <p class="sub"><strong style="color:var(--fg);font-weight:600">Vos informations sont bien arrivées.</strong> Notre équipe commence la configuration de votre compte dès maintenant.</p>
+    <ol class="timeline">
+      <li class="done"><span class="dot">${chk}</span><div><strong>Profil reçu</strong><span>On a tout ce qu'il faut pour bâtir votre compte.</span></div></li>
+      <li class="now"><span class="dot"><i></i></span><div><strong>Configuration de votre compte <em class="tag" style="font-style:normal">En cours</em></strong><span>On personnalise OLA selon vos réponses.</span></div></li>
+      <li class="later"><span class="dot"></span><div><strong>Activation et démarrage</strong><span>On vous contacte immédiatement dès que votre compte est prêt.</span></div></li>
+    </ol>
+    <div class="sign"><span>À bientôt,</span><strong>L'équipe OLA</strong></div>
+    <p class="foot">Besoin d'aide? Écrivez-nous à support@ola-ai.ca<br>© 2026 OLA Inc. Tous droits réservés.</p>
+  </div></section>`;
+}
+
+$("deck").innerHTML = screenIntro() + screenVideo() + QUESTIONS.map(screenFor).join("") + screenRecap() + screenDone();
+renderMembers();
+const all = [...document.querySelectorAll(".screen")];
+const screenOf = id => all.find(s => s.dataset.q === id);
+let cur = all[0];
+
+/* --------- Navigation --------- */
+function order(){ // écrans visibles dans l'ordre
+  return all.filter(s => s.dataset.step !== "q" || visibleQs().some(q => q.id === s.dataset.q));
+}
+function show(target, dir){
+  const list = order(); const from = list.indexOf(cur), to = list.indexOf(target);
+  all.forEach(s => { s.classList.toggle("active", s === target); s.classList.toggle("back-dir", (dir ?? (to < from ? -1 : 1)) < 0 && s !== target); });
+  if (cur && cur !== target) { const v = cur.querySelector("video"); if (v) try { v.pause(); } catch(e) {} }
+  cur = target; target.scrollTop = 0;
+  const qs = visibleQs(), qi = qs.findIndex(q => q.id === target.dataset.q);
+  const step = target.dataset.step;
+  // Progression : la vidéo compte pour 10 %, les questions pour le reste
+  const pct = step === "intro" ? 0 : step === "video" ? 8 : step === "q" ? 10 + (qi / qs.length) * 85 : 100;
+  $("bar").style.width = pct + "%";
+  $("stage").textContent = step === "video" ? "Étape 1 sur 2" : step === "q" ? "Étape 2 sur 2" : "";
+  const c = target.querySelector("[data-count]"); if (c) c.innerHTML = `<b>${qi + 1}</b> / ${qs.length}`;
+  $("back").hidden = step === "intro" || step === "done";
+  target.querySelectorAll("[data-title]").forEach(h => {
+    const span = h.querySelector("span"); h.firstChild.textContent = fill(h.dataset.title);
+    if (span && !h.contains(span)) h.appendChild(span);
+  });
+  if (step === "recap") buildRecap();
+}
+function next(){
+  if (!validate(cur)) return;
+  const list = order(), i = list.indexOf(cur);
+  if (list[i + 1]) show(list[i + 1], 1);
+}
+function prev(){ const list = order(), i = list.indexOf(cur); if (i > 0) show(list[i - 1], -1); }
+
+/* --------- Validation --------- */
+const RULES = {
+  email: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+  tel: v => v.replace(/\D/g, "").length >= 10,
+  postal: v => /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(v.trim())
+};
+const MSG = { email:"Entrez un courriel valide, ex. : nom@exemple.com", tel:"Entrez un numéro à 10 chiffres.", postal:"Entrez un code postal valide, ex. : G1A 1A1" };
+function validate(scr){
+  const id = scr.dataset.q; if (!id) return true;
+  const q = QUESTIONS.find(x => x.id === id);
+  if (q.type === "fields") {
+    let ok = true;
+    q.fields.forEach(f => {
+      const inp = $("f-" + f.id), v = inp.value.trim(); A[f.id] = v;
+      let msg = "";
+      if (f.required && !v) msg = `Entrez votre ${f.label.toLowerCase()}.`;
+      else if (v && f.rule && !RULES[f.rule](v)) msg = MSG[f.rule];
+      inp.setAttribute("aria-invalid", !!msg); $("e-" + f.id).textContent = msg;
+      if (msg && ok) { inp.focus(); ok = false; }
+    });
+    if (A.code_postal) A.code_postal = A.code_postal.toUpperCase().replace(/^(\w{3})\s?(\w{3})$/, "$1 $2");
+    save(); return ok;
+  }
+  if (q.type === "single") {
+    if (!A[id]) return false;
+    if (q.followUp) A[q.followUp.id] = q.followUp.when.includes(A[id]) ? $("f-" + q.followUp.id).value.trim() : "";
+    save(); return true;
+  }
+  if (q.type === "members") {
+    readMembers();
+    A.membres = A.membres.filter((m, i) => i === 0 || m.nom || m.telephone || m.courriel);
+    if (!A.membres[0].nom) { renderMembers(); $("me-0").textContent = "Entrez le nom d'au moins un courtier."; $("m-nom-0").focus(); return false; }
+    renderMembers(); save(); return true;
+  }
+  if (q.type === "text") { A[id] = $("f-" + id).value.trim(); save(); return true; }
+  return true;
+}
+function readMembers(){
+  document.querySelectorAll(".member").forEach(card => {
+    const i = +card.dataset.i;
+    card.querySelectorAll("[data-m]").forEach(inp => { A.membres[i][inp.dataset.m] = inp.value.trim(); });
+  });
+}
+
+/* --------- Interactions --------- */
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-go]")) { next(); return; }
+  if (e.target.closest("#submit")) { submit(); return; }
+  if (e.target.closest("[data-edit]")) { show(screenOf(e.target.closest("[data-edit]").dataset.edit), -1); return; }
+  if (e.target.closest("#add-member")) {
+    readMembers(); A.membres.push({ nom:"", telephone:"", courriel:"" }); save(); renderMembers();
+    const last = A.membres.length - 1; setTimeout(() => { $("m-nom-" + last).focus(); $("m-nom-" + last).scrollIntoView({ behavior:"smooth", block:"center" }); }, 50);
+    return;
+  }
+  const rm = e.target.closest("[data-remove]");
+  if (rm) { readMembers(); A.membres.splice(+rm.dataset.remove, 1); save(); renderMembers(); return; }
+  const c = e.target.closest(".choice[data-q]");
+  if (c) {
+    const q = QUESTIONS.find(x => x.id === c.dataset.q);
+    A[q.id] = c.dataset.v; save();
+    c.parentElement.querySelectorAll(".choice").forEach(b => b.setAttribute("aria-checked", b === c));
+    if (q.followUp) {
+      const show = q.followUp.when.includes(A[q.id]);
+      $("fu-" + q.id).hidden = !show; c.closest(".screen").querySelector(`[data-manual="${q.id}"]`).hidden = !show;
+      if (show) { setTimeout(() => $("f-" + q.followUp.id).focus(), 60); return; }
+    }
+    setTimeout(next, 280);
+  }
+});
+document.addEventListener("input", e => { if (e.target.closest(".member")) { readMembers(); save(); } });
+$("back").addEventListener("click", prev);
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); const b = cur.querySelector(".actions:not([hidden]) [data-go]"); if (b) b.click(); }
+});
+// Glisser vers la droite = retour
+let x0 = null, y0 = null;
+$("deck").addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+$("deck").addEventListener("touchend", e => {
+  if (x0 === null) return;
+  const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+  if (dx > 80 && Math.abs(dx) > Math.abs(dy) * 1.5 && !["intro","done"].includes(cur.dataset.step)) prev();
+  x0 = y0 = null;
+});
+
+/* --------- Récapitulatif --------- */
+function buildRecap(){
+  const team = A.equipe === "Oui, en équipe";
+  const membres = team ? A.membres.filter(m => m.nom) : [];
+  const rows = [
+    ["Nom", `${A.prenom || ""} ${A.nom || ""}`.trim(), "coordonnees"],
+    ["Courriel", A.courriel, "coordonnees"],
+    ["Téléphone", A.telephone, "coordonnees"],
+    ["Équipe", team ? `${membres.length + 1} courtiers` : "Courtier solo", team ? "membres" : "equipe"],
+    ["Agence", [A.adresse, A.ville, A.code_postal].filter(Boolean).join(", "), "agence"],
+    ["Facture", `${A.facture_nom || ""} · ${A.facture_courriel || ""}`, "facturation"],
+    ["Objectif", A.objectif, "objectif"]
+  ];
+  $("recap").innerHTML = rows.map(([k, v, q]) => `<div class="recap-row"><span>${k}</span><strong>${esc(v || "—")}</strong></div>`).join("")
+    + `<div class="recap-row" style="justify-content:center"><button type="button" class="edit" data-edit="coordonnees">Modifier mes réponses</button></div>`;
+}
+
+/* --------- Envoi --------- */
+function payload(){
+  const team = A.equipe === "Oui, en équipe";
+  const membres = team ? A.membres.filter(m => m.nom) : [];
+  const d = {
+    prenom: A.prenom, nom: A.nom, telephone: A.telephone, courriel: A.courriel,
+    equipe: team ? "Oui" : "Non", nb_courtiers: String(membres.length + 1),
+    membres: membres.map(m => [m.nom, m.telephone, m.courriel].filter(Boolean).join(" · ")).join(" | "),
+    adresse: A.adresse, ville: A.ville, code_postal: A.code_postal,
+    facture_nom: A.facture_nom, facture_courriel: A.facture_courriel,
+    objectif: A.objectif, cause: A.cause, probleme: A.probleme,
+    solutions: A.solutions, solutions_pourquoi: A.solutions_pourquoi,
+    base_donnees: A.base, systeme_suivi: A.systeme_suivi,
+    formulaire: "Embarquement OLA", page: location.href.split("?")[0], envoye_le: new Date().toISOString()
+  };
+  membres.forEach((m, i) => { const n = i + 2; d[`courtier_${n}_nom`] = m.nom; d[`courtier_${n}_telephone`] = m.telephone; d[`courtier_${n}_courriel`] = m.courriel; });
+  return d;
+}
+let sending = false;
+async function submit(){
+  if (sending) return; sending = true;
+  const btn = $("submit"); btn.disabled = true; btn.innerHTML = `<span class="spin" aria-hidden="true"></span>Envoi en cours`;
+  $("e-submit").textContent = "";
+  try {
+    const data = payload();
+    if (CONFIG.webhookUrl) {
+      const body = new URLSearchParams();
+      Object.entries(data).forEach(([k, v]) => body.append(k, v == null ? "" : String(v)));
+      await fetch(CONFIG.webhookUrl, { method: "POST", mode: "no-cors", body });
+    } else {
+      console.log("Aucun webhook configuré. Réponses :", data);
+      await new Promise(r => setTimeout(r, 800));
+    }
+    try { localStorage.removeItem(DRAFT); } catch(e) {}
+    $("done-title").innerHTML = `C'est reçu${firstName() ? ", " + esc(firstName()) : ""}.<span>On prend le relais.</span>`;
+    show(all.find(s => s.dataset.step === "done"), 1);
+  } catch (err) {
+    $("e-submit").textContent = "L'envoi n'a pas fonctionné. Vérifiez votre connexion et réessayez.";
+    btn.disabled = false; btn.innerHTML = `Envoyer mon profil ${arrow}`;
+  } finally { sending = false; }
+}
+
+show(all[0]);
+</script>
+</body>
+</html>
