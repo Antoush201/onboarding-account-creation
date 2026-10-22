@@ -171,6 +171,8 @@ h1 span,h2 span{display:block;color:var(--fg-2)}
 const CONFIG = {
   // URL du webhook entrant GHL (déclencheur « Inbound Webhook ») pour l'embarquement
   webhookUrl: "https://services.leadconnectorhq.com/hooks/DL5vmvAkiRP13UUTG58Q/webhook-trigger/7ec2895f-18f0-4a76-82c8-efba4549346c",
+  // Fonction Vercel qui crée la fiche dans la base Clients de Notion (api/notion-client.js)
+  notionUrl: "/api/notion-client",
   videoUrl: "https://assets.cdn.filesafe.space/DL5vmvAkiRP13UUTG58Q/media/6a3441a3671890ccaacc02a9.mp4",
   maxMembers: 10
 };
@@ -497,6 +499,10 @@ async function submit(){
       const body = new URLSearchParams();
       Object.entries(data).forEach(([k, v]) => body.append(k, v == null ? "" : String(v)));
       await fetch(CONFIG.webhookUrl, { method: "POST", mode: "no-cors", body });
+      // Fiche client dans Notion (Clients). Un échec ici ne bloque pas l'embarquement.
+      try {
+        await fetch(CONFIG.notionUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data), keepalive: true });
+      } catch(e) {}
     } else {
       console.log("Aucun webhook configuré. Réponses :", data);
       await new Promise(r => setTimeout(r, 800));
